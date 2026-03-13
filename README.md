@@ -93,7 +93,30 @@ CA1 has a bimodal RI distribution (many cells strongly selective, others stable)
 | `fig6_trajectories.png` | Navigation trajectories to mirror-symmetric goals |
 | `fig7_theta_sweeps.png` | Theta sweep dynamics: L-R alternation vs goal-locking |
 
+## Minimal World Model
+
+`minimal_world_model.py` distills the circuit into its computational essence, mapping each brain region to a world-model component:
+
+| Brain Region | World Model Component | Computation |
+|---|---|---|
+| EC Grid Cells | Latent State Space | Stable spatial coordinates (like VAE latent) |
+| Theta Sweeps | Forward Prediction | Trajectory rollout (like Dreamer imagination) |
+| DG | Sparse Bottleneck | Pattern separation (like VQ-VAE codebook) |
+| CA3 Attractors | Context Memory | Discrete latent states / CSCG clones |
+| CA1 Place Cells | Context-Dependent Readout | Goal-conditioned observation model |
+| Subiculum | Consistency Filter | Reality check / skip connection |
+
+## Connection to CSCG / Orthogonalized State Machines
+
+Sun et al. (2025, Nature) found that CA1 forms an **orthogonalized state machine** through progressive decorrelation during learning. This directly maps to our circuit:
+
+- CA3 attractor states = CSCG's discrete hidden states ("clones")
+- CA1 state cells = final orthogonalized readout
+- DG→CA3→CA1 = progressive decorrelation pathway
+- Sub→EC feedback = stability anchor preventing the decorrelation from corrupting the base spatial scaffold
+
 ## References
 
 - Vollan, A.Z., Gardner, R.J., Moser, M.-B. & Moser, E.I. Left–right-alternating theta sweeps in entorhinal–hippocampal maps of space. *Nature* 639, 995–1005 (2025).
 - Ji, Z., Chu, T., Wu, S. & Burgess, N. A systems model of alternating theta sweeps via firing rate adaptation. *Current Biology* 35, 709–722 (2025).
+- Sun, W. et al. Learning produces an orthogonalized state machine in the hippocampus. *Nature* 640, 165–175 (2025).
