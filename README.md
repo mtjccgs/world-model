@@ -1,38 +1,54 @@
-# Entorhinal Grid Cell – Hippocampal Place Cell World Model
+# Entorhinal–Hippocampal World Model
 
-A bioinspired computational model of the entorhinal–hippocampal circuit implementing the **allocentric ↔ egocentric transformation loop** for spatial cognition.
+A biologically grounded computational model of the entorhinal cortex → hippocampus → entorhinal cortex loop, demonstrating how the brain maintains a robust allocentric spatial scaffold while simultaneously generating flexible, goal-dependent (egocentric/subjective) representations.
 
 ## Theoretical Framework
 
-This model implements the hypothesis that the EC → hippocampus → EC loop transforms stable external (allocentric) spatial representations into flexible subjective (egocentric) representations, then reconstructs the allocentric frame via feedback.
-
-### Circuit Architecture
+The model implements the **allocentric ↔ egocentric transformation loop**:
 
 ```
-ALLOCENTRIC → EGOCENTRIC (Forward Path):
-  EC (grid cells) → DG (pattern separation) → CA3 (attractors) → CA1 (subjective place cells)
+Forward (allocentric → egocentric):
+  EC_II → DG → CA3 → CA1
 
-EGOCENTRIC → ALLOCENTRIC (Feedback Path):
-  CA1 → Subiculum (stable filter) → EC (stabilized grid representation)
+Feedback (egocentric → allocentric):
+  CA1 → Subiculum → EC_deep → EC_II
 ```
-
-### Key Mechanisms
-
-| Region | Mechanism | Role |
-|--------|-----------|------|
-| **Entorhinal Cortex** | Grid cells with goal-direction modulation from head-direction cells | Allocentric spatial scaffold; sweeps L-R during locomotion, locks to goal during pursuit |
-| **Dentate Gyrus** | Sparse winner-take-all coding | Compresses and orthogonalizes overlapping EC representations |
-| **CA3** | Recurrent attractor network (Hopfield-like) | Expands DG sparse codes into orthogonal attractor basins per goal context |
-| **CA1** | Diverse place cells with BTSP, no recurrence | Peak egocentric representation; strong remapping between goal contexts |
-| **Subiculum** | Stable place cells, no BTSP, high threshold | Filters egocentric signal back to allocentric; cross-day stable |
 
 ### Two-Goal Paradigm
 
-An animal navigates to one of two alternative goals (A or B) in the same environment. The model demonstrates:
+Goals A=(0.75, 0.75) and B=(0.25, 0.75) are placed at **mirror-symmetric** positions about the midline (x=0.5). The animal navigates to one goal per trial.
 
-- **CA1 place cells** show strong subjective remapping: firing at goal A location when pursuing A, silent when pursuing B (and vice versa)
-- **Subiculum place cells** maintain stable firing fields regardless of which goal is pursued
-- The **remapping index gradient** EC(low) → DG → CA3 → CA1(highest) → Sub(low) confirms the allocentric→egocentric→allocentric transformation
+### Circuit Components
+
+| Region | N | Mechanism | Role |
+|--------|---|-----------|------|
+| **HD System** | 60 | Ring attractor with firing rate adaptation (Ji et al. 2025) | Generates L-R alternating theta sweeps |
+| **EC (Grid)** | 32 | Hexagonal spatial code + theta sweeps (Vollan et al. 2025) | Allocentric scaffold with goal-direction gain modulation |
+| **DG** | 500 | Sparse winner-take-all (2% active) | Pattern separation: orthogonalizes overlapping EC patterns |
+| **CA3** | 150 | Recurrent attractor (Hopfield-like) + PFC context bias | Amplifies goal-context separation via orthogonal attractors |
+| **CA1** | 200 | No recurrence, BTSP, bimodal goal selectivity | Peak egocentric: strong subjective remapping |
+| **Subiculum** | 100 | Stable fields, no BTSP, high threshold | Filters egocentric → allocentric; cross-day stable |
+
+### Key Biological Mechanisms
+
+**Theta sweep dynamics (Vollan et al. 2025; Ji et al. 2025)**:
+- Within each theta cycle (~125ms), the grid cell population representation sweeps **linearly outward** from the animal's position
+- Direction alternates **±30° left/right** of heading across successive cycles
+- Driven by HD cell ring attractor with firing rate adaptation
+- Sweep length scales with grid module spacing (dorsoventral gradient)
+- During goal pursuit: sweeps lock to goal direction (unpublished)
+
+**Tri-synaptic amplification**:
+- EC provides mild goal-direction modulation (via sweep + gain fields)
+- DG orthogonalizes the overlapping EC signals (sparse WTA)
+- CA3 recurrent connections create orthogonal attractor basins per goal
+- CA1 (no recurrence, BTSP) amplifies into strong subjective place cells
+
+**Subiculum stability**:
+- No BTSP → cannot rapidly form context-dependent fields
+- High firing threshold filters out weak, context-dependent CA1 signals
+- Place fields rarely remap → cross-day stable (unpublished)
+- Feeds back to EC, maintaining stable allocentric grid representation
 
 ## Running
 
@@ -41,18 +57,43 @@ pip install numpy matplotlib scipy
 python grid_place_world_model.py
 ```
 
-### Outputs
+## Results
 
-- `circuit_analysis.png` — Full circuit analysis: rate maps, remapping distributions, sparsity, attractor orthogonality, trajectories
-- `single_cell_remapping.png` — CA1 (strongly remapping) vs Subiculum (stable) single-cell comparison
-- `information_flow.png` — Population activity vectors through the circuit for Goal A vs Goal B
+### Population Vector Correlation (key metric)
 
-## Remapping Index Results
+| Region | PV Corr | Interpretation |
+|--------|---------|----------------|
+| EC | 0.936 | Allocentric (stable grid with subtle sweep modulation) |
+| DG | 0.841 | Pattern separation beginning |
+| CA3 | 0.813 | Attractor dynamics separating goals |
+| **CA1** | **0.046** | **Near-orthogonal: peak egocentric representation** |
+| Sub | 0.986 | **Most stable: filtered back to allocentric** |
 
-| Region | Median RI | Interpretation |
-|--------|-----------|----------------|
-| EC | 0.02 | Low — allocentric, stable grid representation |
-| DG | 0.00 | Very low (sparse) — most cells silent, active ones orthogonalized |
-| CA3 | 0.15 | Moderate — attractor dynamics beginning to separate |
-| CA1 | **0.38** | **Highest — strong subjective/egocentric remapping** |
-| Sub | 0.02 | Low — filtered back to stable allocentric frame |
+### Remapping Index
+
+| Region | Median RI | 95% CI |
+|--------|-----------|--------|
+| EC | 0.120 | [0.106, 0.129] |
+| DG | 0.364 | [0.340, 0.415] |
+| CA3 | 0.352 | [0.342, 0.361] |
+| CA1 | 0.289 | [0.201, 0.352] |
+| Sub | 0.010 | [0.008, 0.012] |
+
+CA1 has a bimodal RI distribution (many cells strongly selective, others stable), consistent with experimental observations.
+
+## Output Figures
+
+| Figure | Contents |
+|--------|----------|
+| `fig1_circuit_ratemaps.png` | Circuit schematic + example rate maps per region |
+| `fig2_remapping_gradient.png` | RI distributions + gradient across circuit |
+| `fig3_cell_contrast.png` | CA1 (remapping) vs Subiculum (stable) single cells |
+| `fig4_population_analysis.png` | PV correlation, sparsity, dimensionality, CA3 attractors |
+| `fig5_information_flow.png` | Population activity matrices through circuit |
+| `fig6_trajectories.png` | Navigation trajectories to mirror-symmetric goals |
+| `fig7_theta_sweeps.png` | Theta sweep dynamics: L-R alternation vs goal-locking |
+
+## References
+
+- Vollan, A.Z., Gardner, R.J., Moser, M.-B. & Moser, E.I. Left–right-alternating theta sweeps in entorhinal–hippocampal maps of space. *Nature* 639, 995–1005 (2025).
+- Ji, Z., Chu, T., Wu, S. & Burgess, N. A systems model of alternating theta sweeps via firing rate adaptation. *Current Biology* 35, 709–722 (2025).
